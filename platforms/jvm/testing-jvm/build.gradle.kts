@@ -1,5 +1,6 @@
 plugins {
     id("gradlebuild.distribution.api-java")
+    id("gradlebuild.instrumented-project")
 }
 
 description = """JVM-specific testing functionality, including the Test type and support for configuring options for and detecting
@@ -17,17 +18,21 @@ errorprone {
 }
 
 dependencies {
-    api(project(":base-annotations"))
-    api(project(":base-services"))
-    api(project(":build-operations"))
-    api(project(":core"))
-    api(project(":core-api"))
-    api(project(":logging"))
-    api(project(":messaging"))
-    api(project(":process-services"))
-    api(project(":reporting"))
-    api(project(":testing-base"))
-    api(project(":toolchains-jvm"))
+    api(projects.stdlibJavaExtensions)
+    api(projects.time)
+    api(projects.baseServices)
+    api(projects.buildOperations)
+    api(projects.core)
+    api(projects.coreApi)
+    api(projects.logging)
+    api(projects.messaging)
+    api(projects.processServices)
+    api(projects.reporting)
+    api(projects.testingBase)
+    api(projects.testingBaseInfrastructure)
+    api(projects.toolchainsJvm)
+    api(projects.toolchainsJvmShared)
+    api(projects.buildProcessServices)
 
     api(libs.asm)
     api(libs.groovy)
@@ -35,12 +40,14 @@ dependencies {
     api(libs.inject)
     api(libs.jsr305)
 
-    implementation(project(":file-temp"))
-    implementation(project(":functional"))
-    implementation(project(":logging-api"))
-    implementation(project(":model-core"))
-    implementation(project(":platform-base"))
-    implementation(project(":testing-jvm-infrastructure"))
+    implementation(projects.concurrent)
+    implementation(projects.serviceLookup)
+    implementation(projects.fileTemp)
+    implementation(projects.functional)
+    implementation(projects.loggingApi)
+    implementation(projects.modelCore)
+    implementation(projects.platformBase)
+    implementation(projects.testingJvmInfrastructure)
 
     implementation(libs.commonsIo)
     implementation(libs.commonsLang)
@@ -48,17 +55,16 @@ dependencies {
     implementation(libs.junit)
     implementation(libs.slf4jApi)
 
-    testImplementation(testFixtures(project(":core")))
-    testImplementation(testFixtures(project(":model-core")))
+    testImplementation(testFixtures(projects.core))
+    testImplementation(testFixtures(projects.modelCore))
 
-    integTestImplementation(project(":plugins"))
-    integTestImplementation(testFixtures(project(":testing-base")))
-    integTestImplementation(testFixtures(project(":language-groovy")))
+    integTestImplementation(testFixtures(projects.testingBase))
+    integTestImplementation(testFixtures(projects.languageGroovy))
 
-    testRuntimeOnly(project(":distributions-core")) {
+    testRuntimeOnly(projects.distributionsCore) {
         because("Tests instantiate DefaultClassLoaderRegistry which requires a 'gradle-plugins.properties' through DefaultPluginModuleRegistry")
     }
-    integTestDistributionRuntimeOnly(project(":distributions-jvm"))
+    integTestDistributionRuntimeOnly(projects.distributionsJvm)
 }
 
 strictCompile {

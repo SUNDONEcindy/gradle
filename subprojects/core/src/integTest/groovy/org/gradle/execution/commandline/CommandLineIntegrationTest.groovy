@@ -99,10 +99,9 @@ class CommandLineIntegrationTest extends AbstractIntegrationSpec {
         createProject()
 
         when:
-        String javaHome = Jvm.current().javaHome
-        String expectedJavaHome = "-PexpectedJavaHome=${javaHome}"
-
-        String path = String.format('%s%s%s', Jvm.current().javaExecutable.parentFile, File.pathSeparator, System.getenv('PATH'))
+        def jvm = Jvm.current()
+        String expectedJavaHome = "-PexpectedJavaHome=${(jvm.javaHome.canonicalPath)}"
+        String path = String.format('%s%s%s', jvm.javaExecutable.parentFile.canonicalPath, File.pathSeparator, System.getenv('PATH'))
 
         then:
         executer.withEnvironmentVars('PATH': path).withJavaHome('').withArguments(expectedJavaHome).withTasks('checkJavaHome').run()
@@ -111,7 +110,7 @@ class CommandLineIntegrationTest extends AbstractIntegrationSpec {
     @Requires(IntegTestPreconditions.NotEmbeddedExecutor)
     def "fails when java home does not point to a java installation"() {
         when:
-        def failure = executer.withJavaHome(testDirectory).withTasks('checkJavaHome').runWithFailure()
+        def failure = executer.withJavaHome(testDirectory.absolutePath).withTasks('checkJavaHome').runWithFailure()
 
         then:
         failure.error.contains('ERROR: JAVA_HOME is set to an invalid directory')
@@ -157,8 +156,10 @@ class CommandLineIntegrationTest extends AbstractIntegrationSpec {
         when:
         buildFile """
             task checkGradleUserHomeViaSystemEnv {
+                def gradleUserHomeDir = gradle.gradleUserHomeDir
+                def customUserHome = file('customUserHome')
                 doLast {
-                    assert gradle.gradleUserHomeDir == file('customUserHome')
+                    assert gradleUserHomeDir == customUserHome
                 }
             }
         """
@@ -180,8 +181,9 @@ class CommandLineIntegrationTest extends AbstractIntegrationSpec {
         given:
         buildFile """
             task checkDefaultGradleUserHome {
+                def gradleUserHomeDir = gradle.gradleUserHomeDir
                 doLast {
-                    assert gradle.gradleUserHomeDir == new File(System.properties['user.home'], ".gradle")
+                    assert gradleUserHomeDir == new File(System.properties['user.home'], ".gradle")
                 }
             }
         """
@@ -269,8 +271,10 @@ class CommandLineIntegrationTest extends AbstractIntegrationSpec {
         given:
         buildFile """
             task checkSystemPropertyGradleUserHomeHasPrecedence {
+                def gradleUserHomeDir = gradle.gradleUserHomeDir
+                def systemPropCustomUserHome = file('systemPropCustomUserHome')
                 doLast {
-                    assert gradle.gradleUserHomeDir == file('systemPropCustomUserHome')
+                    assert gradleUserHomeDir == systemPropCustomUserHome
                 }
             }
         """

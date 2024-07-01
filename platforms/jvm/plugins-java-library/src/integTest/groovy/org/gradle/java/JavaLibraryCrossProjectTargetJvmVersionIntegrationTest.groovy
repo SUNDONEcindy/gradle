@@ -55,10 +55,10 @@ class JavaLibraryCrossProjectTargetJvmVersionIntegrationTest extends AbstractInt
         fails ':checkDeps'
 
         then:
-        failure.assertHasErrorOutput("""> Could not resolve all task dependencies for configuration ':compileClasspath'.
+        failure.assertHasErrorOutput("""> Could not resolve all dependencies for configuration ':compileClasspath'.
    > Could not resolve project :producer.
      Required by:
-         project :
+         root project :
       > Dependency resolution is looking for a library compatible with JVM runtime version 6, but 'project :producer' is only compatible with JVM runtime version 7 or newer.""")
         failure.assertHasResolution("Change the dependency on 'project :producer' to an earlier version that supports JVM runtime version 7.")
     }
@@ -137,10 +137,10 @@ class JavaLibraryCrossProjectTargetJvmVersionIntegrationTest extends AbstractInt
 
         then:
         failure.assertHasErrorOutput("""
-> Could not resolve all task dependencies for configuration ':compileClasspath'.
+> Could not resolve all dependencies for configuration ':compileClasspath'.
    > Could not resolve project :producer.
      Required by:
-         project :
+         root project :
       > Dependency resolution is looking for a library compatible with JVM runtime version 6, but 'project :producer' is only compatible with JVM runtime version 7 or newer.""")
         failure.assertHasResolution("Change the dependency on 'project :producer' to an earlier version that supports JVM runtime version 7.")
 

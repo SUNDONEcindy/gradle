@@ -15,7 +15,14 @@
 [[build_cache]]
 = Build Cache
 
-TIP: Want to learn the tips and tricks top engineering teams use to keep builds fast and performant? https://gradle.org/training/#build-cache-deep-dive[Register here] for our Build Cache Training.
+++++
+<div class="badge-wrapper">
+    <a class="badge" href="https://dpeuniversity.gradle.com/app/courses/ec69d0b8-9171-4969-ac3e-82dea16f87b0/" target="_blank">
+        <span class="badge-type button--blue">LEARN</span>
+        <span class="badge-text">Incremental Builds and Build Caching with Gradle&nbsp;&nbsp;&nbsp;&gt;</span>
+    </a>
+</div>
+++++
 
 [[sec:build_cache_intro]]
 == Overview
@@ -101,7 +108,7 @@ BUILD SUCCESSFUL
 
 Now we see that, instead of executing the `:compileJava` task, the outputs of the task have been loaded from the build cache.
 The other tasks have not been loaded from the build cache since they are not cacheable. This is due to
-`:classes` and `:assemble` being <<lifecycle_tasks.adoc#sec:lifecycle_tasks,lifecycle tasks>> and `:processResources`
+`:classes` and `:assemble` being <<organizing_tasks.adoc#sec:lifecycle_tasks,lifecycle tasks>> and `:processResources`
 and `:jar` being Copy-like tasks which are not cacheable since it is generally faster to execute them.
 
 [[sec:task_output_caching_details]]

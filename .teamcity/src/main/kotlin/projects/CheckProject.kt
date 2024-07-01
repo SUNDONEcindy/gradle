@@ -29,7 +29,8 @@ class CheckProject(
         param("teamcity.ui.settings.readOnly", "true")
         // Avoid rebuilding same revision if it's already built on another branch
         param("teamcity.vcsTrigger.runBuildOnSameRevisionInEveryBranch", "false")
-        param("env.GRADLE_ENTERPRISE_ACCESS_KEY", "%ge.gradle.org.access.key%;%ge-td-dogfooding.grdev.net.access.key%")
+        param("env.DEVELOCITY_ACCESS_KEY", "%ge.gradle.org.access.key%")
+        param("env.CHROME_BIN", "%linux.chrome.bin.path%")
 
         text(
             "additional.gradle.parameters",

@@ -57,7 +57,6 @@ import org.gradle.execution.plan.TaskNodeDependencyResolver
 import org.gradle.execution.plan.TaskNodeFactory
 import org.gradle.initialization.BuildCancellationToken
 import org.gradle.internal.buildoption.DefaultInternalOptions
-import org.gradle.internal.concurrent.DefaultParallelismConfiguration
 import org.gradle.internal.concurrent.ExecutorFactory
 import org.gradle.internal.concurrent.ManagedExecutor
 import org.gradle.internal.event.DefaultListenerManager
@@ -66,6 +65,7 @@ import org.gradle.internal.operations.TestBuildOperationRunner
 import org.gradle.internal.service.ServiceRegistry
 import org.gradle.internal.service.scopes.Scope
 import org.gradle.internal.work.DefaultWorkerLeaseService
+import org.gradle.internal.work.DefaultWorkerLimits
 import org.gradle.internal.work.WorkerLeaseRegistry
 import org.gradle.util.Path
 
@@ -80,8 +80,8 @@ class DefaultTaskExecutionGraphSpec extends AbstractExecutionPlanSpec {
     def nodeExecutor = Mock(NodeExecutor)
     def buildOperationRunner = new TestBuildOperationRunner()
     def listenerBuildOperationDecorator = new TestListenerBuildOperationDecorator()
-    def parallelismConfiguration = new DefaultParallelismConfiguration(true, 1)
-    def workerLeases = new DefaultWorkerLeaseService(coordinator, parallelismConfiguration)
+    def workerLimits = new DefaultWorkerLimits(1)
+    def workerLeases = new DefaultWorkerLeaseService(coordinator, workerLimits)
     def executorFactory = Mock(ExecutorFactory)
     def accessHierarchies = new ExecutionNodeAccessHierarchies(CASE_SENSITIVE, Stub(Stat))
     def taskNodeFactory = new TaskNodeFactory(thisBuild, Stub(BuildTreeWorkGraphController), nodeValidator, new TestBuildOperationRunner(), accessHierarchies)
@@ -89,7 +89,7 @@ class DefaultTaskExecutionGraphSpec extends AbstractExecutionPlanSpec {
     def projectStateRegistry = Stub(ProjectStateRegistry)
     def executionPlan = newExecutionPlan()
     def taskGraph = new DefaultTaskExecutionGraph(
-        new DefaultPlanExecutor(parallelismConfiguration, executorFactory, workerLeases, cancellationToken, coordinator, new DefaultInternalOptions([:])),
+        new DefaultPlanExecutor(workerLimits, executorFactory, workerLeases, cancellationToken, coordinator, new DefaultInternalOptions([:])),
         [nodeExecutor],
         buildOperationRunner,
         listenerBuildOperationDecorator,

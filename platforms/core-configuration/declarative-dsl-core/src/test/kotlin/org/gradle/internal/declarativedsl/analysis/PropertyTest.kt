@@ -18,13 +18,13 @@ package org.gradle.internal.declarativedsl.analysis
 
 import org.gradle.declarative.dsl.model.annotations.Restricted
 import org.gradle.internal.declarativedsl.demo.resolve
-import org.gradle.internal.declarativedsl.language.DataType
+import org.gradle.internal.declarativedsl.language.DataTypeInternal
 import org.gradle.internal.declarativedsl.schemaBuilder.CollectedPropertyInformation
 import org.gradle.internal.declarativedsl.schemaBuilder.DefaultPropertyExtractor
 import org.gradle.internal.declarativedsl.schemaBuilder.PropertyExtractor
 import org.gradle.internal.declarativedsl.schemaBuilder.plus
 import org.gradle.internal.declarativedsl.schemaBuilder.schemaFromTypes
-import org.gradle.internal.declarativedsl.schemaBuilder.toDataTypeRefOrError
+import org.gradle.internal.declarativedsl.schemaBuilder.toDataTypeRef
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -61,9 +61,9 @@ object PropertyTest {
             propertyExtractor = testPropertyContributor(expectedName, typeOf<Int>()) + testPropertyContributor(expectedName, typeOf<String>())
         )
 
-        val property = schema.dataClassesByFqName[FqName.parse(MyReceiver::class.qualifiedName!!)]!!.properties.single()
+        val property = schema.dataClassesByFqName[DefaultFqName.parse(MyReceiver::class.qualifiedName!!)]!!.properties.single()
         assertEquals(expectedName, property.name)
-        assertEquals(DataType.IntDataType.ref, property.type)
+        assertEquals(DataTypeInternal.DefaultIntDataType.ref, property.valueType)
     }
 
     private
@@ -83,8 +83,8 @@ object PropertyTest {
                     CollectedPropertyInformation(
                         "z",
                         typeOf<Int>(),
-                        DataType.IntDataType.ref,
-                        DataProperty.PropertyMode.WRITE_ONLY,
+                        DataTypeInternal.DefaultIntDataType.ref,
+                        DefaultDataProperty.DefaultPropertyMode.DefaultWriteOnly,
                         hasDefaultValue = false,
                         isHiddenInDeclarativeDsl = false,
                         isDirectAccessOnly = false,
@@ -97,9 +97,11 @@ object PropertyTest {
 
     private
     fun testPropertyContributor(name: String, type: KType) = object : PropertyExtractor {
-        override fun extractProperties(kClass: KClass<*>, propertyNamePredicate: (String) -> Boolean): Iterable<CollectedPropertyInformation> =
-            listOf(CollectedPropertyInformation(name, type, type.toDataTypeRefOrError(), DataProperty.PropertyMode.READ_WRITE, false, false, false, emptyList()))
+        override fun extractProperties(kClass: KClass<*>, propertyNamePredicate: (String) -> Boolean): Iterable<CollectedPropertyInformation> {
+            val returnType = type.toDataTypeRef()!!
+            return listOf(CollectedPropertyInformation(name, type, returnType, DefaultDataProperty.DefaultPropertyMode.DefaultReadWrite, false, false, false, emptyList()))
                 .filter { propertyNamePredicate(it.name) }
+        }
     }
 
     private

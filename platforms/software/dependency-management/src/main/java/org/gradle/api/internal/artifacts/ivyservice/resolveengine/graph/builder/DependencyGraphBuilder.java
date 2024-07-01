@@ -49,13 +49,14 @@ import org.gradle.api.internal.attributes.CompatibilityRule;
 import org.gradle.api.internal.attributes.ImmutableAttributes;
 import org.gradle.api.internal.attributes.ImmutableAttributesFactory;
 import org.gradle.api.specs.Spec;
-import org.gradle.internal.component.resolution.failure.exception.AbstractResolutionFailureException;
-import org.gradle.internal.component.ResolutionFailureHandler;
+import org.gradle.internal.component.resolution.failure.ResolutionFailureHandler;
 import org.gradle.internal.component.model.ComponentGraphResolveMetadata;
 import org.gradle.internal.component.model.ComponentIdGenerator;
 import org.gradle.internal.component.model.DefaultCompatibilityCheckResult;
 import org.gradle.internal.component.model.DependencyMetadata;
 import org.gradle.internal.component.model.GraphVariantSelector;
+import org.gradle.internal.component.model.VariantGraphResolveMetadata;
+import org.gradle.internal.component.resolution.failure.exception.AbstractResolutionFailureException;
 import org.gradle.internal.deprecation.DeprecationLogger;
 import org.gradle.internal.operations.BuildOperationConstraint;
 import org.gradle.internal.operations.BuildOperationExecutor;
@@ -374,7 +375,7 @@ public class DependencyGraphBuilder {
         for (ModuleResolveState module : resolveState.getModules()) {
             ComponentState selected = module.getSelected();
             if (selected != null) {
-                ResolutionFailureHandler resolutionFailureHandler = resolveState.getVariantSelector().getFailureProcessor();
+                ResolutionFailureHandler resolutionFailureHandler = resolveState.getVariantSelector().getFailureHandler();
                 if (selected.isRejected()) {
                     GradleException error = new GradleException(selected.getRejectedErrorMessage());
                     attachFailureToEdges(error, module.getIncomingEdges());
@@ -398,15 +399,17 @@ public class DependencyGraphBuilder {
                 attachMultipleForceOnPlatformFailureToEdges(module);
             }
         }
-        List<EdgeState> incomingRootEdges = resolveState.getRoot().getIncomingEdges();
-        if (!incomingRootEdges.isEmpty()) {
-            String rootNodeName = resolveState.getRoot().getResolvedConfigurationId().getConfiguration();
+
+        if (resolveState.getRoot().wasIncomingEdgeAdded()) {
+            String rootNodeName = resolveState.getRoot().getMetadata().getName();
             DeprecationLogger.deprecate(
                     String.format(
                         "While resolving configuration '%s', it was also selected as a variant. Configurations should not act as both a resolution root and a variant simultaneously. " +
                             "Depending on the resolved configuration in this manner",
                         rootNodeName
                     ))
+                .withProblemIdDisplayName("Configurations should not act as both a resolution root and a variant simultaneously.")
+                .withProblemId("configurations-acting-as-both-root-and-variant")
                 .withAdvice("Be sure to mark configurations meant for resolution as canBeConsumed=false or use the 'resolvable(String)' configuration factory method to create them.")
                 .willBecomeAnErrorInGradle9()
                 .withUpgradeGuideSection(8, "depending_on_root_configuration")
@@ -505,7 +508,10 @@ public class DependencyGraphBuilder {
             assertCompatibleAttributes(first, second, incompatibleNodes, consumerSchema);
         }
         if (!incompatibleNodes.isEmpty()) {
-            AbstractResolutionFailureException variantsSelectionException = resolutionFailureHandler.incompatibleArtifactVariantsFailure(consumerSchema, selected, incompatibleNodes);
+            Set<VariantGraphResolveMetadata> incompatibleNodeMetadatas = incompatibleNodes.stream()
+                .map(NodeState::getMetadata)
+                .collect(Collectors.toSet());
+            AbstractResolutionFailureException variantsSelectionException = resolutionFailureHandler.incompatibleMultipleNodesValidationFailure(consumerSchema, selected.getMetadata(), incompatibleNodeMetadatas);
             for (EdgeState edge : module.getIncomingEdges()) {
                 edge.failWith(variantsSelectionException);
             }

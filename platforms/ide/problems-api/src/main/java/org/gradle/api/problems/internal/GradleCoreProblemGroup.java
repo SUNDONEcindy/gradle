@@ -25,6 +25,7 @@ public abstract class GradleCoreProblemGroup implements ProblemGroup {
     private static final DefaultValidationProblemGroup VALIDATION_PROBLEM_GROUP = new DefaultValidationProblemGroup("validation", "Validation");
     private static final DefaultProblemGroup TASK_SELECTION_PROBLEM_GROUP = new DefaultProblemGroup("task-selection", "Task selection");
     private static final DefaultProblemGroup VERSION_CATALOG_PROBLEM_GROUP = new DefaultProblemGroup("dependency-version-catalog", "Version catalog");
+    private static final DefaultProblemGroup VARIANT_RESOLUTION_PROBLEM_GROUP = new DefaultProblemGroup("dependency-variant-resolution", "Variant resolution");
 
     public static CompilationProblemGroup compilation() {
         return COMPILATION_PROBLEM_GROUP;
@@ -46,8 +47,14 @@ public abstract class GradleCoreProblemGroup implements ProblemGroup {
         return VERSION_CATALOG_PROBLEM_GROUP;
     }
 
+    public static ProblemGroup variantResolution() {
+        return VARIANT_RESOLUTION_PROBLEM_GROUP;
+    }
+
     public interface CompilationProblemGroup extends ProblemGroup {
         ProblemGroup java();
+
+        ProblemGroup groovy();
 
         ProblemGroup groovyDsl();
     }
@@ -61,6 +68,7 @@ public abstract class GradleCoreProblemGroup implements ProblemGroup {
     private static class DefaultCompilationProblemGroup extends DefaultProblemGroup implements CompilationProblemGroup {
 
         private final ProblemGroup java = new DefaultProblemGroup("java", "Java compilation", this);
+        private final ProblemGroup groovy = new DefaultProblemGroup("groovy", "Groovy compilation", this);
         public ProblemGroup groovyDsl = new DefaultProblemGroup("groovy-dsl", "Groovy DSL script compilation", this);
 
         private DefaultCompilationProblemGroup(String id, String displayName) {
@@ -70,6 +78,11 @@ public abstract class GradleCoreProblemGroup implements ProblemGroup {
         @Override
         public ProblemGroup java() {
             return this.java;
+        }
+
+        @Override
+        public ProblemGroup groovy() {
+            return this.groovy;
         }
 
         @Override

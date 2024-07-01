@@ -18,8 +18,9 @@ package org.gradle.kotlin.dsl.integration
 
 import org.gradle.api.JavaVersion
 import org.gradle.integtests.fixtures.AvailableJavaHomes
-import org.gradle.internal.classanalysis.JavaClassUtil
+import org.gradle.integtests.fixtures.jvm.TestJavaClassUtil
 import org.gradle.internal.jvm.Jvm
+import org.gradle.internal.serialize.JavaClassUtil
 import org.gradle.kotlin.dsl.fixtures.AbstractKotlinIntegrationTest
 import org.gradle.test.fixtures.file.LeaksFileHandles
 import org.gradle.test.precondition.Requires
@@ -110,7 +111,7 @@ class KotlinDslJvmTargetIntegrationTest : AbstractKotlinIntegrationTest() {
         val newerJvm = AvailableJavaHomes.getDifferentVersion { it.languageVersion > currentJvm.javaVersion }
         assumeNotNull(newerJvm)
 
-        val installationPaths = listOf(currentJvm!!, newerJvm!!)
+        val installationPaths = listOf(currentJvm, newerJvm!!)
             .joinToString(",") { it.javaHome.absolutePath }
 
         val utils = withClassJar("utils.jar", JavaClassUtil::class.java)
@@ -147,7 +148,7 @@ class KotlinDslJvmTargetIntegrationTest : AbstractKotlinIntegrationTest() {
         withFile("plugin/src/main/kotlin/some.gradle.kts", printScriptJavaClassFileMajorVersion)
 
         gradleExecuterFor(arrayOf("check", "publish"), rootDir = file("plugin"))
-            .withJavaHome(currentJvm.javaHome)
+            .withJvm(currentJvm)
             .withArgument("-Porg.gradle.java.installations.paths=$installationPaths")
             .run()
 
@@ -168,7 +169,7 @@ class KotlinDslJvmTargetIntegrationTest : AbstractKotlinIntegrationTest() {
         withBuildScriptIn("consumer", """plugins { id("some") }""")
 
         val helpResult = gradleExecuterFor(arrayOf("help"), rootDir = file("consumer"))
-            .withJavaHome(newerJvm.javaHome)
+            .withJvm(newerJvm)
             .run()
 
         assertThat(helpResult.output, containsString(outputFor(supportedKotlinJavaVersion(newerJvm.javaVersion!!))))
@@ -184,7 +185,7 @@ class KotlinDslJvmTargetIntegrationTest : AbstractKotlinIntegrationTest() {
         val newerJvm = AvailableJavaHomes.getJdk22()
         assumeNotNull(newerJvm)
 
-        val installationPaths = listOf(currentJvm!!, newerJvm!!)
+        val installationPaths = listOf(currentJvm, newerJvm!!)
             .joinToString(",") { it.javaHome.absolutePath }
 
         val utils = withClassJar("utils.jar", JavaClassUtil::class.java)
@@ -221,7 +222,7 @@ class KotlinDslJvmTargetIntegrationTest : AbstractKotlinIntegrationTest() {
         withFile("plugin/src/main/kotlin/some.gradle.kts", printScriptJavaClassFileMajorVersion)
 
         val pluginCompile = gradleExecuterFor(arrayOf("check", "publish"), rootDir = file("plugin"))
-            .withJavaHome(currentJvm.javaHome)
+            .withJvm(currentJvm)
             .withArgument("-Porg.gradle.java.installations.paths=$installationPaths")
             .run()
         assertThat(pluginCompile.output, containsString("w: Inconsistent JVM-target compatibility detected for tasks 'compileJava' (22) and 'compileKotlin' (21)."))
@@ -243,7 +244,7 @@ class KotlinDslJvmTargetIntegrationTest : AbstractKotlinIntegrationTest() {
         withBuildScriptIn("consumer", """plugins { id("some") }""")
 
         val helpResult = gradleExecuterFor(arrayOf("help"), rootDir = file("consumer"))
-            .withJavaHome(newerJvm.javaHome)
+            .withJvm(newerJvm)
             .run()
 
         assertThat(helpResult.output, containsString(outputFor(supportedKotlinJavaVersion(newerJvm.javaVersion!!))))
@@ -251,12 +252,12 @@ class KotlinDslJvmTargetIntegrationTest : AbstractKotlinIntegrationTest() {
 
     private
     val printScriptJavaClassFileMajorVersion = """
-        println("Java Class Major Version = ${'$'}{org.gradle.internal.classanalysis.JavaClassUtil.getClassMajorVersion(this::class.java)}")
+        println("Java Class Major Version = ${'$'}{org.gradle.internal.serialize.JavaClassUtil.getClassMajorVersion(this::class.java)}")
     """
 
     private
     fun outputFor(javaVersion: JavaVersion) =
-        "Java Class Major Version = ${JavaClassUtil.getClassMajorVersion(javaVersion)}"
+        "Java Class Major Version = ${TestJavaClassUtil.getClassVersion(javaVersion)}"
 
     private
     fun supportedKotlinJavaVersion(version: JavaVersion = JavaVersion.current()): JavaVersion {
